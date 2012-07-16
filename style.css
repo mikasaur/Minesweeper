@@ -1,0 +1,10 @@
+table {
+    text-align: center;
+}
+td {
+    width: 20px;
+    height: 20px;
+}
+td.unclicked {
+    background: #999;
+}
