@@ -8,3 +8,9 @@ td {
 td.unclicked {
     background: #999;
 }
+td.cheating {
+    background: #FF0000 !important;
+}
+.hidden {
+    display: none;
+}

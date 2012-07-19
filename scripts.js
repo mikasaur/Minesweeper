@@ -5,7 +5,7 @@ function setupPage() {
             $("#wonMessage").addClass("hidden");
             
             var gameStatus = "playing";
-            var gameBoard = new board(8, .75);
+            var gameBoard = new board(8, 10);
             var boardHtml = gameBoard.boardHTML;
             
             if( $("#board").length == 0 ){
@@ -52,11 +52,13 @@ function setupPage() {
 function board(size, difficulty) { // how to incorporate OOP?
     this.size = size;
     this.difficulty = difficulty;
-    this.boardArray = buildBoardArray(this, size, difficulty);
+    
+    var initialBoardArray = buildBoardArray(this, size);
+    this.boardArray = populateBombs(initialBoardArray, difficulty);
     this.boardHTML = buildBoardHTML(this);
 }
 
-function buildBoardArray(parentBoard, size, difficulty) {
+function buildBoardArray(parentBoard, size) {
     var boardArray = new Array(size);
     for( var i=0; i<size; i++ ) {
         boardArray[i] = new Array(size);
@@ -64,17 +66,40 @@ function buildBoardArray(parentBoard, size, difficulty) {
     
     for( var i=0; i<size; i++ ) {
         for( var j=0; j<size; j++ ) {
-            var randomNumber = Math.random();
-            if( randomNumber > difficulty ){
-                boardArray[i][j] = new tile(i, j, "bomb", "unclicked", parentBoard);
-            }
-            else {
-                boardArray[i][j] = new tile(i, j, "blank", "unclicked", parentBoard);
-            }
+            boardArray[i][j] = new tile(i, j, "blank", "unclicked", parentBoard);
         }
     }
     
     return boardArray;
+}
+
+function populateBombs(boardArray, difficulty) {
+    
+    for( var i=0; i<difficulty; i++ ) {
+        var convertedBombTile = convertRandomBombTile(boardArray);
+        var x = convertedBombTile.x;
+        var y = convertedBombTile.y;
+        
+        boardArray[x][y] = convertedBombTile;
+    }
+    
+    return boardArray;
+}
+
+function convertRandomBombTile(boardArray) {
+    xPos = Math.floor(Math.random() * boardArray.length);
+    yPos = Math.floor(Math.random() * boardArray.length);
+    
+    var pickedTile = boardArray[xPos][yPos];
+    var tileType = pickedTile.type;
+    
+    if( tileType == "bomb" ) {
+        return convertRandomBombTile(boardArray);
+    }
+    else {
+        pickedTile.type = "bomb";
+        return pickedTile;
+    }
 }
 
 function buildBoardHTML(parentBoard) {
