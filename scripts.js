@@ -1,21 +1,51 @@
 function setupPage() {
     $(document).ready(function() {
         $("#newGame").click( function(event) {
-           var gameBoard = new board(10, .75);
-           var boardHtml = gameBoard.boardHTML;
-           
-           if( $("#board").length == 0 ){
+            $("#lostMessage").addClass("hidden");
+            $("#wonMessage").addClass("hidden");
+            
+            var gameStatus = "playing";
+            var gameBoard = new board(8, .75);
+            var boardHtml = gameBoard.boardHTML;
+            
+            if( $("#board").length == 0 ){
                 $("#boardWrapper").append(boardHtml);
             }
             else {
-                $("#board").replaceWith(boardHtml);
+             $("#board").replaceWith(boardHtml);
             }
             
             $("td.unclicked").click( function(event) {
-                $(this).removeClass("unclicked");
-                $(this).addClass("clicked");
+                if( gameStatus == "playing" ) {
+                    var tileId = $(this).attr('id');
+                    var xPos = tileId.split("_")[0];
+                    var yPos = tileId.split("_")[1];
+                    var clickedTile = getTileFromBoard(gameBoard, xPos, yPos);
+                    
+                    clickTile(xPos, yPos, gameBoard);
+                    gameStatus = getGameStatus(clickedTile);
+                    
+                    if( gameStatus == "lost" ) {
+                        $("#lostMessage.hidden").removeClass("hidden");
+                    }
+                }
+            });
+            
+            $("#validate").click( function(event) {
+                gameStatus = checkIfBoardIsWinner(gameBoard);
+                
+                if( gameStatus == "lost" ) {
+                    $("#lostMessage.hidden").removeClass("hidden");
+                }
+                else if( gameStatus == "won" ) {
+                    $("#wonMessage.hidden").removeClass("hidden");
+                }
             });
         });
+        $("#cheat").click( function(event) {
+            $(".bomb").addClass("cheating");
+        });
+        
     });
 }
 
@@ -60,11 +90,12 @@ function buildBoardHTML(parentBoard) {
             var currentTile = boardArray[i][j];
             var isBomb = currentTile.type == "bomb";
             if( isBomb ) {
-                myBoardHTML += "<td class='bomb unclicked'><img src='mine_image.png' /></td>";
+                myBoardHTML += "<td class='bomb unclicked' id='" + i + "_" + j + "'><img class='hidden bomb' src='mine_image.png' /></td>";
             }
             else {
                 var numberOfNeighborBombs = countNeighborBombs(currentTile, parentBoard);
-                myBoardHTML += "<td class='blank unclicked'>" + numberOfNeighborBombs + "</td>";
+                currentTile.bombCount = numberOfNeighborBombs;
+                myBoardHTML += "<td class='blank unclicked' id='" + i + "_" + j + "'></td>";
             }
         }
         myBoardHTML += "</tr>";
@@ -72,6 +103,10 @@ function buildBoardHTML(parentBoard) {
 
     myBoardHTML += "</table>";
     return myBoardHTML;
+}
+
+function getTileFromBoard( parentBoard, x, y ) {
+    return parentBoard.boardArray[x][y];
 }
 
 function tile(x, y, type, status, parentBoard) { // how to incorporate OOP?
@@ -103,4 +138,47 @@ function countNeighborBombs(tile, parentBoard) {
     }
     
     return bombCount;
+}
+
+function clickTile(x, y, parentBoard) {
+    var clickedTile = getTileFromBoard(parentBoard, x, y);
+    var bombCount = clickedTile.bombCount;
+    var tileType = clickedTile.type;
+    clickedTile.status = "clicked";
+    
+    $("#"+x+"_"+y).addClass("clicked");
+    $("#"+x+"_"+y).removeClass("unclicked");
+    if( tileType == "blank" ) {
+        $("#"+x+"_"+y).html(bombCount);
+    }
+    else {
+        $(".bomb.hidden").removeClass("hidden");
+    }
+}
+
+function getGameStatus(tile) {
+    var type = tile.type;
+    var status = tile.status;
+    
+    if( type == "bomb" && status == "clicked" ) {
+        return "lost";
+    }
+    else {
+        return "playing";
+    }
+}
+
+function checkIfBoardIsWinner(board) {
+    var boardArray = board.boardArray;
+    
+    for(var i=0; i<boardArray.length; i++) {
+        for(var j=0; j<boardArray.length; j++) {
+            var tileToCheck = boardArray[i][j];
+            if( tileToCheck.type == "blank" && tileToCheck.status == "unclicked" ) {
+                return "lost";
+            }
+        }
+    }
+    
+    return "won";
 }
