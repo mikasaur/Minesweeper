@@ -1,3 +1,6 @@
+// Michael Martin
+// July 19 2012
+
 function setupPage() {
     $(document).ready(function() {  // page is ready
         $("#newGame").click( function(event) {  // handle user clicking on "New Game"
